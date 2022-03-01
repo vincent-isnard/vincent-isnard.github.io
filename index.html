@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XP Maac</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/4.0.30/Dropbox-sdk.min.js"></script>
+</head>
+<body></body>
+<script>
+	// Sauvegarde des donnees sur Dropbox
+    var tok = 'Lnqu9xBRrpgAAAAAAAAAAcyWdQb03dYb6j4qSIu7c2lG3ufPey4qa-5VlC6DkkvG';
+	
+    function save_data_csv() {
+        try {
+            var dbx = new Dropbox.Dropbox({
+                fetch: fetch,
+                accessToken: tok
+            });
+            dbx.filesUpload({
+                    path: '/' + Date.now() + '.csv',
+                    mode: 'overwrite',
+                    mute: true,
+                    contents: jsPsych.data.get().csv()
+                })
+                .then(function (response) {
+                    console.log(response);
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+        } catch (err) {
+            console.log("Save data function failed.", err);
+        }        
+    }
+	
+	// Timeline
+	var timeline = [];
+	
+	// Accueil	
+	var welcome_screen = {
+		type: 'html-button-response',
+		stimulus: "<p>Bienvenue pour cette expérience de perception auditive !<br><br></p>" +
+		"<p>Avant de démarrer, équipez-vous d'un casque audio ou d'écouteurs de bonne qualité.<br><br></p>",
+		choices: ['Continue'],
+	}
+	timeline.push(welcome_screen);
+	
+	// Formulaire
+	var formulaire = {
+		type: 'survey-text',
+		questions: [
+			{prompt: "Entrez vos initiales :", required:true},
+			{prompt: "Entrez votre âge :", required:true},
+			{prompt: "Entrez les références de votre casque ou de vos écouteurs (ex. : Sennheiser HD25) :", required:true}
+		],
+		on_finish: function(data){
+			jsPsych.data.addProperties({subject_id: JSON.parse(data.responses).Q0 + '_' + Date.now()});
+		}
+	};
+	timeline.push(formulaire);
+	
+	var formulaire2 = {
+	  type: 'survey-multi-choice',
+	  questions: [
+		{prompt: "Etes-vous :", name: 'Musicalite', options: ["Musicien.ne (au moins 7 ans d'entraînement musical et plus de 2h par jour de pratique)", "Non-musicien.ne (pas d'expertise ni de pratique)"], required:true},
+		{prompt: "Etes-vous :", name: 'Lateralite', options: ["Gaucher.e", "Droitier.e"], required:true} // pour analyse TR
+	  ],
+	};
+	timeline.push(formulaire2);
+	
+	// Consignes
+	var consignes = {
+		type: 'html-button-response',
+		stimulus: "<p><u>Consignes :</u></p>" +
+		"<p>A chaque essai, vous allez entendre un son de voix ou d'instrument, très bref, et dont on a supprimé une partie de l'information sonore. </p>" +
+		"<p>Vous devrez malgré cela essayer de le reconnaître en appuyant sur la touche <b>Q pour voix</b> ou <b>M pour instrument</b>.</p>" +
+		"<p>Les voix sont des voyelles chantées, les instruments sont des instruments d'orchestre.</p>" +
+		"<p>Avant de commencer le test formel, vous passerez un court entraînement de 20 essais pour vous familiariser avec ce type de sons, dont on aura supprimé moins d'information rendant la tâche un peu plus facile que pour le test formel. Vous pourrez également en profiter pour ajuster le niveau sonore à un niveau confortable.</p>" +
+		"<p>Ensuite le test formel, de 1200 essais séparés en 4 blocs de 300 essais, dure environ 30 min.</p>" +
+		"<p><b>Si vous êtes prêt à démarrer, cliquez sur 'Continue' et le premier son sera émis après 3s le temps de vous préparer à appuyer sur une touche.</b></p>",
+		choices: ['Continue'],
+		post_trial_gap: 3000
+	}
+	timeline.push(consignes);
+			
+	// Fin entrainement
+	var fin_entrainement = {
+		type: 'html-button-response',
+		stimulus: "<p>Fin de l'entraînement.</p>" +
+		"<p>L'expérience se déroule en <b>4 blocs de 300 essais</b> chacun.</p>" +
+		"<p>Pour démarrer le premier bloc, cliquez sur 'Continue'.</p>",
+		choices: ['Continue'],
+		post_trial_gap: 3000
+	}
+	timeline.push(fin_entrainement);
+		
+	// Routine
+	jsPsych.init({
+		timeline: timeline,
+		on_finish: function() {
+			//jsPsych.data.displayData(); // pour afficher les donnees - ou bien taper dans la console : jsPsych.data.get().csv()
+			save_data_csv();
+		}
+    })
+</script>
+</html>
